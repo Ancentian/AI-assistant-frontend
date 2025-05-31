@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { marked } from "marked";
 import { toast, Toaster } from "react-hot-toast";
 import SummaryApi from "../../api/index";
-import { MoonIcon, SunIcon, PaperAirplaneIcon } from "@heroicons/react/24/solid";
+import { MoonIcon, SunIcon } from "@heroicons/react/24/solid";
 
 interface ChatHistoryItem {
   question: string;
