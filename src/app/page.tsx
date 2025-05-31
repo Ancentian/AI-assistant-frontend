@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import LoadingSpinner from "../../components/LoadingSpinner";
 import { marked } from "marked";
 import { toast, Toaster } from "react-hot-toast";
 import SummaryApi from "../../api/index";
@@ -172,11 +171,6 @@ export default function Home() {
                   disabled={loading}
                   className="absolute right-3 bottom-3 p-2 rounded-full bg-blue-500 hover:bg-blue-600 text-white"
                 >
-                  {loading ? (
-                    <LoadingSpinner size="small" />
-                  ) : (
-                    <PaperAirplaneIcon className="h-5 w-5" />
-                  )}
                 </button>
               )}
             </div>
