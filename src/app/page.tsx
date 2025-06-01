@@ -12,17 +12,12 @@ interface ChatHistoryItem {
   answer: string;
 }
 
-// Initialize marked
+// Initialize marked with only valid options
 marked.setOptions({
   gfm: true,
   breaks: true,
-  smartypants: true,
-  headerIds: false,
-  mangle: false,
-  xhtml: true,
-  pedantic: false,
-  sanitize: true,
-  renderer: new marked.Renderer(),
+  // mangle: false,
+  // xhtml: true,
 });
 
 export default function Home() {
