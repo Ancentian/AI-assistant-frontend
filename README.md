@@ -19,6 +19,11 @@ npm install marked react-hot-toast
 npm install -D tailwindcss postcss autoprefixer
 npx tailwindcss init -p
 npm install @heroicons/react
+npm install marked
+# or
+yarn add marked
+npm install marked-smartypants
+npm install dompurify
 ```
 
 4. Run the frontend development server:
