@@ -16,13 +16,12 @@ interface ChatHistoryItem {
 marked.setOptions({
   gfm: true,
   breaks: true,
-  // mangle: false,
-  // xhtml: true,
 });
 
 export default function Home() {
   const [question, setQuestion] = useState("");
   const [answer, setAnswer] = useState("");
+  const [renderedAnswer, setRenderedAnswer] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [history, setHistory] = useState<ChatHistoryItem[]>([]);
@@ -43,7 +42,12 @@ export default function Home() {
     const stored = localStorage.getItem("chatHistory");
     if (stored) {
       try {
-        setHistory(JSON.parse(stored));
+        const parsedHistory = JSON.parse(stored);
+        setHistory(parsedHistory);
+        // Render any existing answer from history
+        if (parsedHistory.length > 0 && activeIndex !== null) {
+          renderMarkdown(parsedHistory[activeIndex].answer).then(setRenderedAnswer);
+        }
       } catch (e) {
         console.error("Failed to parse chat history", e);
       }
@@ -77,6 +81,15 @@ export default function Home() {
     }
   }, [question]);
 
+  // Render markdown when answer changes
+  useEffect(() => {
+    if (answer) {
+      renderMarkdown(answer).then(setRenderedAnswer);
+    } else {
+      setRenderedAnswer("");
+    }
+  }, [answer]);
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!question.trim()) return;
@@ -98,8 +111,10 @@ export default function Home() {
       if (res.ok) {
         const safeAnswer = DOMPurify.sanitize(data.answer);
         setAnswer(safeAnswer);
-        setHistory((prev) => [...prev, { question, answer: safeAnswer }]);
+        const newHistoryItem = { question, answer: safeAnswer };
+        setHistory((prev) => [...prev, newHistoryItem]);
         setQuestion("");
+        setActiveIndex(history.length); // Set active index to the new item
       } else {
         throw new Error(data.detail || "Something went wrong");
       }
@@ -116,6 +131,7 @@ export default function Home() {
     setHistory([]);
     localStorage.removeItem("chatHistory");
     setAnswer("");
+    setRenderedAnswer("");
     setQuestion("");
     setActiveIndex(null);
     toast.success("History cleared");
@@ -139,14 +155,22 @@ export default function Home() {
       .catch(() => toast.error("Failed to copy"));
   };
 
-  const renderMarkdown = (content: string) => {
+  const renderMarkdown = async (content: string): Promise<string> => {
     try {
-      const dirty = marked(content);
+      const dirty = await marked(content);
       return DOMPurify.sanitize(dirty);
     } catch (e) {
       console.error("Markdown rendering error", e);
       return DOMPurify.sanitize(content);
     }
+  };
+
+  const loadHistoryItem = (index: number) => {
+    const reversedIndex = history.length - 1 - index;
+    const item = history[reversedIndex];
+    setQuestion(item.question);
+    setAnswer(item.answer);
+    setActiveIndex(reversedIndex);
   };
 
   return (
@@ -174,15 +198,11 @@ export default function Home() {
                 <li
                   key={index}
                   className={`p-2 rounded cursor-pointer text-sm transition-colors ${
-                    activeIndex === index
+                    activeIndex === history.length - 1 - index
                       ? "bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-200"
                       : "hover:bg-gray-100 dark:hover:bg-gray-700"
                   }`}
-                  onClick={() => {
-                    setAnswer(item.answer);
-                    setQuestion(item.question);
-                    setActiveIndex(index);
-                  }}
+                  onClick={() => loadHistoryItem(index)}
                 >
                   <span className="dark:text-gray-200 line-clamp-1">
                     {item.question}
@@ -260,7 +280,7 @@ export default function Home() {
           )}
           
           {/* Answer Section */}
-          {answer && (
+          {renderedAnswer && (
             <div className="mt-6 p-4 bg-gray-50 dark:bg-gray-700 rounded-md border border-gray-200 dark:border-gray-600 relative">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
@@ -287,7 +307,7 @@ export default function Home() {
                   prose-table:border-collapse prose-table:w-full prose-table:border prose-table:border-gray-200 dark:prose-table:border-gray-600
                   prose-th:bg-gray-100 dark:prose-th:bg-gray-700 prose-th:p-2 prose-th:border prose-th:border-gray-200 dark:prose-th:border-gray-600
                   prose-td:p-2 prose-td:border prose-td:border-gray-200 dark:prose-td:border-gray-600"
-                dangerouslySetInnerHTML={{ __html: renderMarkdown(answer) }}
+                dangerouslySetInnerHTML={{ __html: renderedAnswer }}
               />
             </div>
           )}
